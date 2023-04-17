@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from glob import glob
 import hashlib
 import os
 import platform
@@ -79,7 +78,7 @@ def install_steamworks(target: Target):
         get_source_extract_dir(target), target.source_subdir)
     # Copy header files
     source_include_dir = os.path.join(source_dir, "public", "steam")
-    source_header_files = glob("*.h", root_dir=source_include_dir)
+    source_header_files = [p for p in os.listdir(source_include_dir) if p.endswith(".h")]
     install_include_dir = os.path.join(INSTALL_ROOT_DIR, "include", "steam")
     os.makedirs(install_include_dir, exist_ok=True)
     for file_name in source_header_files:
