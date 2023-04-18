@@ -299,7 +299,7 @@ TARGETS = (
            configure_options=(),
            configure=False,
            build=False,
-           install=install_steamworks)
+           install=install_steamworks),
 )
 
 STAGES = (download, source, patch, configure, build, install)
