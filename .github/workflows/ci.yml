@@ -3,7 +3,7 @@ on: [push, pull_request]
 env:
   GCLOUD_CREDENTIAL_BASE64: ${{ secrets.GCLOUD_CREDENTIAL_BASE64 }}
 jobs:
-  build:
+  linux:
     name: linux
     runs-on: ubuntu-latest
     container:
@@ -26,3 +26,25 @@ jobs:
           GCLOUD_BUCKET: ${{ vars.GCLOUD_BUCKET }}
         run: python3 scripts/build.py
         shell: bash
+  windows:
+    name: windows
+    runs-on: windows-2022
+    steps:
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+      # Manually save the gcloud credentials outside of the working t ree because the
+      # google-github-actions/auth action places the file directly into the working tree.
+      - name: Authenticate to Google Cloud
+        run: |
+          gcloud config set disable_prompts True
+          gcloud_credential_file=$(mktemp)
+          echo "${GCLOUD_CREDENTIAL_BASE64}" | base64 -d > ${gcloud_credential_file}
+          gcloud auth activate-service-account "--key-file=${gcloud_credential_file}"
+        shell: bash
+      - uses: actions/checkout@v3
+      - name: Build
+        env:
+          GCLOUD_BUCKET: ${{ vars.GCLOUD_BUCKET }}
+        run: python3 scripts/build.py
+        shell: bash
+
