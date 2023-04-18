@@ -29,6 +29,9 @@ jobs:
   windows:
     name: windows
     runs-on: windows-2022
+    env:
+      VCVARS_ARCH: x64
+      VCVARS_VERSION: '14.3'
     steps:
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
@@ -45,6 +48,5 @@ jobs:
       - name: Build
         env:
           GCLOUD_BUCKET: ${{ vars.GCLOUD_BUCKET }}
-        run: python3 scripts/build.py zlib
+        run: python3 scripts/devenv.py python3 scripts/build.py zlib
         shell: bash
-
