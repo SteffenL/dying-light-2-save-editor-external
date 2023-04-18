@@ -78,6 +78,9 @@ def get_source_extract_dir(target: Target):
 
 
 def install_steamworks(target: Target):
+    build_dir = os.path.join(BUILD_ROOT_DIR, target.name, target.version)
+    if os.path.exists(build_dir + ".install.ok"):
+        return
     print("Installing {} {}...".format(target.name, target.version))
     source_dir = os.path.join(
         get_source_extract_dir(target), target.source_subdir)
@@ -114,6 +117,7 @@ def install_steamworks(target: Target):
                             os.path.join(install_lib_dir, "steam_api64.dll"))
             shutil.copyfile(os.path.join(source_lib_dir, "steam_api64.lib"),
                             os.path.join(install_lib_dir, "steam_api64.lib"))
+    create_empty_file(build_dir + ".install.ok")
 
 
 def download(target: Target):
