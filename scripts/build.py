@@ -290,7 +290,7 @@ TARGETS = (
            configure_options=(
                "-DwxBUILD_SHARED=OFF",
            )),
-    Target(name="steamworks",
+    Target(name="steamworks-sdk",
            version="1.55",
            sha256="3d5ab5d2b5538fdbe49fd81abf3b6bc6c18b91bcc6a0fecd4122f22b243ee704",
            filename="steamworks_sdk_155.zip",
