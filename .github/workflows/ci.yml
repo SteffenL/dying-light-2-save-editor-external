@@ -2,9 +2,40 @@ name: CI
 on: [push, pull_request]
 env:
   GCLOUD_CREDENTIAL_BASE64: ${{ secrets.GCLOUD_CREDENTIAL_BASE64 }}
+  # Remove "-dev" only in a release branch.
+  RELEASE_VERSION: 0.1.0-dev
+  ASSET_NAME_PREFIX: dl2se-external
 jobs:
-  linux:
-    name: linux
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check that release version is proper when pushing a tag
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        run: |
+          if [[ ! "${RELEASE_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-.+)?$ ]]; then
+            echo "::error::RELEASE_VERSION should be set to a version number."
+            exit 1
+          fi
+        shell: bash
+      - name: Check that release version is placeholder when not pushing a tag
+        if: github.event_name != 'push' || github.ref_type != 'tag'
+        run: |
+          if [[ "${RELEASE_VERSION}" != *-dev ]]; then
+            echo "::error::RELEASE_VERSION should end with \"-dev\"."
+            exit 1
+          fi
+        shell: bash
+      - name: Check that the tag name matches the release version
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        run: |
+          if [[ "${{ github.ref_name }}" != "v${RELEASE_VERSION}" ]]; then
+            echo "::error::Tag name (${{ github.ref_name }}) either doesn't have the proper format or the version in the tag doesn't match the release version (${RELEASE_VERSION})."
+            exit 1
+          fi
+        shell: bash
+  build-linux:
+    needs:
+      - check-version
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/steffenl/cxx-builder:1.0
@@ -26,13 +57,20 @@ jobs:
           GCLOUD_BUCKET: ${{ vars.GCLOUD_BUCKET }}
         run: python3 scripts/build.py zlib
         shell: bash
+      - name: Create package
+        run: |
+          mkdir dist || exit 1
+          echo "${{ github.sha }}" > install/version.txt || exit 1
+          (cd install && tar --create --auto-compress --file=../dist/${ASSET_NAME_PREFIX}${RELEASE_VERSION}-linux.x86_64.tar.xz *) || exit 1
       - uses: actions/upload-artifact@v3
+        if: github.event_name == 'push'
         with:
-          name: artifacts-linux
-          path: install
+          name: dist
+          path: dist/*
           retention-days: 1
-  windows:
-    name: windows
+  build-windows:
+    needs:
+      - check-version
     runs-on: windows-2022
     env:
       VCVARS_ARCH: x64
@@ -55,8 +93,38 @@ jobs:
           GCLOUD_BUCKET: ${{ vars.GCLOUD_BUCKET }}
         run: python3 scripts/devenv.py python3 scripts/build.py zlib
         shell: bash
+      - name: Create package
+        run: |
+          mkdir dist || exit 1
+          echo "${{ github.sha }}" > install/version.txt || exit 1
+          (cd install && tar -caf ../dist/${ASSET_NAME_PREFIX}${RELEASE_VERSION}-windows.amd64.zip *) || exit 1
+        shell: bash
       - uses: actions/upload-artifact@v3
+        if: github.event_name == 'push'
         with:
-          name: artifacts-windows
-          path: install
+          name: dist
+          path: dist/*
           retention-days: 1
+  publish:
+    needs:
+      - build-linux
+      - build-windows
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: dist
+          path: dist
+      - name: List artifacts
+        run: find dist/ || exit 1
+      - name: Create GitHub Release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create --verify-tag --draft --target "${{ github.sha }}" "v${RELEASE_VERSION}" dist/* || exit 1
+        shell: bash
