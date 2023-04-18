@@ -8,6 +8,9 @@ import sys
 from typing import Callable, List
 from urllib.request import urlretrieve
 
+# Name of the environment variable containing the Google Cloud Storage bucket name
+GCLOUD_BUCKET_VAR_NAME = "GCLOUD_BUCKET"
+
 
 @dataclass
 class Target:
@@ -41,6 +44,7 @@ def expand_target_vars(target: Target, var: str, depth: int = 1):
     if depth > 10:
         raise Exception("Possible infinite recursion")
     replaced = var.format(
+        bucket=os.environ[GCLOUD_BUCKET_VAR_NAME],
         filename=target.filename,
         name=target.name,
         version=target.version,
@@ -291,8 +295,7 @@ TARGETS = (
            sha256="3d5ab5d2b5538fdbe49fd81abf3b6bc6c18b91bcc6a0fecd4122f22b243ee704",
            filename="steamworks_sdk_155.zip",
            source_subdir="sdk",
-           url="gs://" + os.environ["GCLOUD_BUCKET"] +
-               "/libraries/steamworks-sdk/steamworks_sdk_155.zip",
+           url="gs://{bucket}/libraries/steamworks-sdk/steamworks_sdk_155.zip",
            configure_options=(),
            configure=False,
            build=False,
