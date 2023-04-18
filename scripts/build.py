@@ -310,17 +310,16 @@ TARGETS = (
 STAGES = (download, source, patch, configure, build, install)
 
 
-def for_each_stage(callback: Callable[[Callable[[str], None]], None]):
-    return tuple(map(callback, STAGES))
-
-
-def for_each_target(callback: Callable[[str], None]):
-    return tuple(map(callback, TARGETS))
-
-
 def main(args: List[str]):
+    known_target_names = set([target.name for target in TARGETS])
+    for target_name in args:
+        if not target_name in known_target_names:
+            raise Exception("Unknown target: {}".format(target_name))
     copy_lib_to_install()
-    for_each_target(lambda target: for_each_stage(lambda stage: stage(target)))
+    for target in TARGETS:
+        for stage in STAGES:
+            if len(args) == 0 or target.name in args:
+                stage(target)
 
 
 if __name__ == "__main__":
