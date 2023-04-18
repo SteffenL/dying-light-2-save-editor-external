@@ -24,7 +24,7 @@ jobs:
       - name: Build
         env:
           GCLOUD_BUCKET: ${{ vars.GCLOUD_BUCKET }}
-        run: python3 scripts/build.py
+        run: python3 scripts/build.py zlib
         shell: bash
   windows:
     name: windows
@@ -45,6 +45,6 @@ jobs:
       - name: Build
         env:
           GCLOUD_BUCKET: ${{ vars.GCLOUD_BUCKET }}
-        run: python3 scripts/build.py
+        run: python3 scripts/build.py zlib
         shell: bash
 
