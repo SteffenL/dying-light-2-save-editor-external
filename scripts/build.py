@@ -1,5 +1,7 @@
+import base64
 from dataclasses import dataclass
 import hashlib
+import json
 import os
 import platform
 import shutil
@@ -7,9 +9,15 @@ import subprocess
 import sys
 from typing import Callable, List
 from urllib.request import urlretrieve
+from urllib.parse import urlsplit
 
-# Name of the environment variable containing the Google Cloud Storage bucket name
-GCLOUD_BUCKET_VAR_NAME = "GCLOUD_BUCKET"
+from google.cloud import storage
+
+
+gcloud_bucket_name = os.environ["GCLOUD_BUCKET"]
+gcloud_credential_base64 = os.environ["GCLOUD_CREDENTIAL_BASE64"]
+gcloud_client = storage.Client.from_service_account_info(
+    json.loads(base64.b64decode(gcloud_credential_base64)))
 
 
 @dataclass
@@ -44,7 +52,7 @@ def expand_target_vars(target: Target, var: str, depth: int = 1):
     if depth > 10:
         raise Exception("Possible infinite recursion")
     replaced = var.format(
-        bucket=os.environ[GCLOUD_BUCKET_VAR_NAME],
+        bucket=gcloud_bucket_name,
         filename=target.filename,
         name=target.name,
         version=target.version,
@@ -120,6 +128,15 @@ def install_steamworks(target: Target):
     create_empty_file(build_dir + ".install.ok")
 
 
+def gcloud_download(url: str, file_path: str):
+    parts = urlsplit(url)
+    if parts.scheme != "gs":
+        raise Exception("Unsupported scheme: {}".format(parts.scheme))
+    bucket = gcloud_client.bucket(parts.netloc)
+    path = parts.path[1:]
+    bucket.blob(path).download_to_filename(file_path)
+
+
 def download(target: Target):
     if target.download == False:
         return
@@ -133,7 +150,7 @@ def download(target: Target):
         target.name, target.version, url))
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     if url.startswith("gs://"):
-        subprocess.check_call(("gcloud", "storage", "cp", url, file_path))
+        gcloud_download(url, file_path)
     else:
         urlretrieve(url, file_path)
     digest = sha256sum_file(file_path)
