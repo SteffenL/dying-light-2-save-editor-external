@@ -73,12 +73,13 @@ def get_source_extract_dir(target: Target):
 
 
 def install_steamworks(target: Target):
-    print("Installing Steamworks SDK")
+    print("Installing {} {}...".format(target.name, target.version))
     source_dir = os.path.join(
         get_source_extract_dir(target), target.source_subdir)
     # Copy header files
     source_include_dir = os.path.join(source_dir, "public", "steam")
-    source_header_files = [p for p in os.listdir(source_include_dir) if p.endswith(".h")]
+    source_header_files = [p for p in os.listdir(
+        source_include_dir) if p.endswith(".h")]
     install_include_dir = os.path.join(INSTALL_ROOT_DIR, "include", "steam")
     os.makedirs(install_include_dir, exist_ok=True)
     for file_name in source_header_files:
@@ -86,7 +87,8 @@ def install_steamworks(target: Target):
                         os.path.join(install_include_dir, file_name))
     # Copy library files
     source_lib_dir = os.path.join(source_dir, "redistributable_bin")
-    install_lib_dir = os.path.join(INSTALL_ROOT_DIR, "bin"  if platform.system() == "Windows" else "lib")
+    install_lib_dir = os.path.join(
+        INSTALL_ROOT_DIR, "bin" if platform.system() == "Windows" else "lib")
     os.makedirs(install_lib_dir, exist_ok=True)
     machine = platform.machine()
     if platform.system() == "Darwin":
@@ -176,6 +178,7 @@ def configure(target: Target):
     build_dir = os.path.join(BUILD_ROOT_DIR, target.name, target.version)
     if os.path.exists(build_dir + ".configure.ok"):
         return
+    print("Configuring {} {}...".format(target.name, target.version))
     install_dir = INSTALL_ROOT_DIR
     subprocess.check_call((
         "cmake",
@@ -203,6 +206,7 @@ def build(target: Target):
     build_dir = os.path.join(BUILD_ROOT_DIR, target.name, target.version)
     if os.path.exists(build_dir + ".build.ok"):
         return
+    print("Building {} {}...".format(target.name, target.version))
     subprocess.check_call((
         "cmake",
         "--build",
@@ -219,6 +223,7 @@ def install(target: Target):
     build_dir = os.path.join(BUILD_ROOT_DIR, target.name, target.version)
     if os.path.exists(build_dir + ".install.ok"):
         return
+    print("Installing {} {}...".format(target.name, target.version))
     subprocess.check_call((
         "cmake",
         "--install",
@@ -228,6 +233,7 @@ def install(target: Target):
 
 
 def copy_lib_to_install():
+    print("Copying lib directory into install directory...")
     os.makedirs(INSTALL_ROOT_DIR, exist_ok=True)
     shutil.copytree(os.path.join(ROOT_DIR, "lib"),
                     os.path.join(INSTALL_ROOT_DIR, "lib"), dirs_exist_ok=True)
