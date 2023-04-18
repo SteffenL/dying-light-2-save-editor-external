@@ -55,6 +55,7 @@ def expand_target_vars(target: Target, var: str, depth: int = 1):
 
 
 def create_empty_file(file_path: str):
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
     open(file_path, "w").close()
 
 
