@@ -16,18 +16,6 @@ jobs:
             echo "::error::RELEASE_VERSION should be set to a version number."
             exit 1
           fi
-        shell: bash
-      - name: Check that release version is placeholder when not pushing a tag
-        if: github.event_name != 'push' || github.ref_type != 'tag'
-        run: |
-          if [[ "${RELEASE_VERSION}" != *-dev ]]; then
-            echo "::error::RELEASE_VERSION should end with \"-dev\"."
-            exit 1
-          fi
-        shell: bash
-      - name: Check that the tag name matches the release version
-        if: github.event_name == 'push' && github.ref_type == 'tag'
-        run: |
           if [[ "${{ github.ref_name }}" != "v${RELEASE_VERSION}" ]]; then
             echo "::error::Tag name (${{ github.ref_name }}) either doesn't have the proper format or the version in the tag doesn't match the release version (${RELEASE_VERSION})."
             exit 1
@@ -123,7 +111,6 @@ jobs:
       - name: List artifacts
         run: find dist/ || exit 1
       - name: Create GitHub Release
-        if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create --verify-tag --draft --target "${{ github.sha }}" "v${RELEASE_VERSION}" dist/* || exit 1
