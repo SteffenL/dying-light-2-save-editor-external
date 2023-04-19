@@ -1,20 +1,32 @@
---- CMakeLists.txt	2022-10-13 14:06:55.000000000 +0900
-+++ CMakeLists.txt	2023-03-14 01:46:37.703034022 +0900
-@@ -1,9 +1,9 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b412dc7..a5e7a2f 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,15 +1,14 @@
 -cmake_minimum_required(VERSION 2.4.4)
 +cmake_minimum_required(VERSION 3.0)
  set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
  
 -project(zlib C)
--
--set(VERSION "1.2.13")
 +project(zlib
 +    VERSION "1.2.13"
 +    LANGUAGES C)
  
- set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "Installation directory for executables")
- set(INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE PATH "Installation directory for libraries")
-@@ -60,7 +60,6 @@
+-set(VERSION "1.2.13")
+-
+-set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "Installation directory for executables")
+-set(INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE PATH "Installation directory for libraries")
+-set(INSTALL_INC_DIR "${CMAKE_INSTALL_PREFIX}/include" CACHE PATH "Installation directory for headers")
+-set(INSTALL_MAN_DIR "${CMAKE_INSTALL_PREFIX}/share/man" CACHE PATH "Installation directory for manual pages")
+-set(INSTALL_PKGCONFIG_DIR "${CMAKE_INSTALL_PREFIX}/share/pkgconfig" CACHE PATH "Installation directory for pkgconfig (.pc) files")
++include(GNUInstallDirs)
++set(INSTALL_BIN_DIR "${CMAKE_INSTALL_BINDIR}" CACHE PATH "Installation directory for executables")
++set(INSTALL_LIB_DIR "${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Installation directory for libraries")
++set(INSTALL_INC_DIR "${CMAKE_INSTALL_INCLUDEDIR}" CACHE PATH "Installation directory for headers")
+ 
+ include(CheckTypeSize)
+ include(CheckFunctionExists)
+@@ -60,7 +59,6 @@ if(MSVC)
      set(CMAKE_DEBUG_POSTFIX "d")
      add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
      add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
@@ -22,8 +34,13 @@
  endif()
  
  if(NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
-@@ -80,8 +79,6 @@
- 		${ZLIB_PC} @ONLY)
+@@ -75,13 +73,8 @@ if(NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
+   endif()
+ endif()
+ 
+-set(ZLIB_PC ${CMAKE_CURRENT_BINARY_DIR}/zlib.pc)
+-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/zlib.pc.cmakein
+-		${ZLIB_PC} @ONLY)
  configure_file(	${CMAKE_CURRENT_SOURCE_DIR}/zconf.h.cmakein
  		${CMAKE_CURRENT_BINARY_DIR}/zconf.h @ONLY)
 -include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR})
@@ -31,39 +48,63 @@
  
  #============================================================================
  # zlib
-@@ -149,6 +146,16 @@
+@@ -149,6 +142,16 @@ endif(MINGW)
  
  add_library(zlib SHARED ${ZLIB_SRCS} ${ZLIB_DLL_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
  add_library(zlibstatic STATIC ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
 +
-+if(ZLIB_USE_STATIC_LIBS)
-+    add_library(ZLIB::ZLIB ALIAS zlibstatic)
-+else()
-+    add_library(ZLIB::ZLIB ALIAS zlib)
-+endif()
-+
-+target_include_directories(zlib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
-+target_include_directories(zlibstatic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
++target_include_directories(zlib PUBLIC
++    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
++    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
++    $<INSTALL_INTERFACE:${INSTALL_INC_DIR}>)
++target_include_directories(zlibstatic PUBLIC
++    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
++    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
++    $<INSTALL_INTERFACE:${INSTALL_INC_DIR}>)
 +
  set_target_properties(zlib PROPERTIES DEFINE_SYMBOL ZLIB_DLL)
  set_target_properties(zlib PROPERTIES SOVERSION 1)
  
-@@ -189,25 +196,3 @@
- if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
-     install(FILES ${ZLIB_PC} DESTINATION "${INSTALL_PKGCONFIG_DIR}")
+@@ -176,6 +179,7 @@ endif()
+ 
+ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
+     install(TARGETS zlib zlibstatic
++        EXPORT zlib-targets
+         RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
+         ARCHIVE DESTINATION "${INSTALL_LIB_DIR}"
+         LIBRARY DESTINATION "${INSTALL_LIB_DIR}" )
+@@ -183,31 +187,18 @@ endif()
+ if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL )
+     install(FILES ${ZLIB_PUBLIC_HDRS} DESTINATION "${INSTALL_INC_DIR}")
  endif()
--
+-if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
+-    install(FILES zlib.3 DESTINATION "${INSTALL_MAN_DIR}/man3")
+-endif()
+-if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
+-    install(FILES ${ZLIB_PC} DESTINATION "${INSTALL_PKGCONFIG_DIR}")
+-endif()
+ 
 -#============================================================================
 -# Example binaries
 -#============================================================================
--
+ 
 -add_executable(example test/example.c)
 -target_link_libraries(example zlib)
 -add_test(example example)
--
++include(CMakePackageConfigHelpers)
++configure_package_config_file(
++    zlib-config.cmake.in zlib-config.cmake
++    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/zlib
++    NO_SET_AND_CHECK_MACRO
++    NO_CHECK_REQUIRED_COMPONENTS_MACRO
++)
+ 
 -add_executable(minigzip test/minigzip.c)
 -target_link_libraries(minigzip zlib)
--
++install(FILES ${CMAKE_CURRENT_BINARY_DIR}/zlib-config.cmake
++    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/zlib
++)
+ 
 -if(HAVE_OFF64_T)
 -    add_executable(example64 test/example.c)
 -    target_link_libraries(example64 zlib)
@@ -74,3 +115,19 @@
 -    target_link_libraries(minigzip64 zlib)
 -    set_target_properties(minigzip64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
 -endif()
++install(EXPORT zlib-targets DESTINATION ${INSTALL_LIB_DIR}/cmake/zlib)
+diff --git a/zlib-config.cmake.in b/zlib-config.cmake.in
+new file mode 100644
+index 0000000..a7f7f00
+--- /dev/null
++++ b/zlib-config.cmake.in
+@@ -0,0 +1,9 @@
++@PACKAGE_INIT@
++
++include(${CMAKE_CURRENT_LIST_DIR}/zlib-targets.cmake)
++
++if(ZLIB_USE_STATIC_LIBS)
++    add_library(ZLIB::ZLIB ALIAS zlibstatic)
++else()
++    add_library(ZLIB::ZLIB ALIAS zlib)
++endif()
