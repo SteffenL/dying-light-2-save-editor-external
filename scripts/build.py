@@ -12,6 +12,7 @@ from urllib.request import urlretrieve
 from urllib.parse import urlsplit
 
 from google.cloud import storage
+import patch_ng
 
 
 @dataclass
@@ -185,8 +186,8 @@ def patch(target: Target):
     print("Patching {} {} sources...".format(target.name, target.version))
     subdir = expand_target_vars(target, target.source_subdir)
     source_dir = os.path.join(extract_dir, subdir) if subdir else extract_dir
-    subprocess.check_call(
-        ("git", "apply", "--ignore-whitespace", patch_file_path), cwd=source_dir)
+    p = patch_ng.fromfile(patch_file_path)
+    p.apply(strip=0, root=source_dir)
     create_empty_file(extract_dir + ".patch.ok")
 
 
