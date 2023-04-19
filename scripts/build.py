@@ -14,12 +14,6 @@ from urllib.parse import urlsplit
 from google.cloud import storage
 
 
-gcloud_bucket_name = os.environ["GCLOUD_BUCKET"]
-gcloud_credential_base64 = os.environ["GCLOUD_CREDENTIAL_BASE64"]
-gcloud_client = storage.Client.from_service_account_info(
-    json.loads(base64.b64decode(gcloud_credential_base64)))
-
-
 @dataclass
 class Target:
     name: str
@@ -52,7 +46,7 @@ def expand_target_vars(target: Target, var: str, depth: int = 1):
     if depth > 10:
         raise Exception("Possible infinite recursion")
     replaced = var.format(
-        bucket=gcloud_bucket_name,
+        bucket=os.getenv("GCLOUD_BUCKET"),
         filename=target.filename,
         name=target.name,
         version=target.version,
@@ -132,7 +126,10 @@ def gcloud_download(url: str, file_path: str):
     parts = urlsplit(url)
     if parts.scheme != "gs":
         raise Exception("Unsupported scheme: {}".format(parts.scheme))
-    bucket = gcloud_client.bucket(parts.netloc)
+    credential_base64 = os.environ["GCLOUD_CREDENTIAL_BASE64"]
+    client = storage.Client.from_service_account_info(
+        json.loads(base64.b64decode(credential_base64)))
+    bucket = client.bucket(parts.netloc)
     path = parts.path[1:]
     bucket.blob(path).download_to_filename(file_path)
 
