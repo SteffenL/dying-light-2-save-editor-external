@@ -216,7 +216,7 @@ def configure(target: Target):
         source_dir,
         "-DBoost_USE_STATIC_LIBS=ON",
         "-DBUILD_SHARED_LIBS=OFF",
-        "-DCMAKE_BUILD_TYPE=Release",
+        "-DCMAKE_BUILD_TYPE=" + os.getenv("CMAKE_BUILD_TYPE", "Release"),
         "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=TRUE",
         "-DCMAKE_INSTALL_PREFIX=" + install_dir,
         "-DCMAKE_PREFIX_PATH=" + install_dir,
