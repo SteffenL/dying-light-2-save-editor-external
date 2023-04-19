@@ -42,7 +42,7 @@ jobs:
         run: |
           mkdir dist || exit 1
           echo "${{ github.sha }}" > install/version.txt || exit 1
-          (cd install && tar --create --auto-compress --file=../dist/${ASSET_NAME_PREFIX}${RELEASE_VERSION}-linux.x86_64.tar.xz *) || exit 1
+          (cd install && tar --create --xz "--file=../dist/${ASSET_NAME_PREFIX}${RELEASE_VERSION}-linux.x86_64.tar.xz" *) || exit 1
       - uses: actions/upload-artifact@v3
         if: github.event_name == 'push'
         with:
@@ -71,7 +71,7 @@ jobs:
         run: |
           mkdir dist || exit 1
           echo "${{ github.sha }}" > install/version.txt || exit 1
-          (cd install && tar -caf ../dist/${ASSET_NAME_PREFIX}${RELEASE_VERSION}-windows.amd64.zip *) || exit 1
+          (cd install && tar -cJf "../dist/${ASSET_NAME_PREFIX}${RELEASE_VERSION}-windows.amd64.tar.xz" *) || exit 1
         shell: bash
       - uses: actions/upload-artifact@v3
         if: github.event_name == 'push'
