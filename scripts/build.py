@@ -214,11 +214,14 @@ def configure(target: Target):
         build_dir,
         "-S",
         source_dir,
+        "-DBoost_USE_STATIC_LIBS=ON",
+        "-DBUILD_SHARED_LIBS=OFF",
         "-DCMAKE_BUILD_TYPE=Release",
         "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=TRUE",
         "-DCMAKE_INSTALL_PREFIX=" + install_dir,
         "-DCMAKE_PREFIX_PATH=" + install_dir,
         "-DPKG_CONFIG_USE_CMAKE_PREFIX_PATH=TRUE",
+        "-DZLIB_USE_STATIC_LIBS=ON",
         *target.configure_options
     ))
     create_empty_file(build_dir + ".configure.ok")
