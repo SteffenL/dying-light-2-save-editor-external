@@ -3,6 +3,7 @@ import os
 import platform
 import subprocess
 import sys
+from typing import List
 
 
 class Arch(Enum):
@@ -68,7 +69,7 @@ def activate_msvc_toolchain(architecture: Arch, vcvars_version: str):
     os.environ.update(vcvars_env)
 
 
-def main(args: list[str]):
+def main(args: List[str]):
     cmd = None
     if platform.system() == "Windows":
         arch, vcvars_version = (os.environ["VCVARS_ARCH"],
