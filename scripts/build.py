@@ -206,6 +206,9 @@ def configure(target: Target):
         return
     print("Configuring {} {}...".format(target.name, target.version))
     install_dir = INSTALL_ROOT_DIR
+    link_options = []
+    if platform.system() == "Linux":
+        link_options.append("-static-libstdc++")
     subprocess.check_call((
         "cmake",
         "-G",
@@ -217,9 +220,11 @@ def configure(target: Target):
         "-DBoost_USE_STATIC_LIBS=ON",
         "-DBUILD_SHARED_LIBS=OFF",
         "-DCMAKE_BUILD_TYPE=" + os.getenv("CMAKE_BUILD_TYPE", "Release"),
+        "-DCMAKE_EXE_LINKER_FLAGS=" + ";".join(link_options),
         "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=TRUE",
         "-DCMAKE_INSTALL_PREFIX=" + install_dir,
         "-DCMAKE_PREFIX_PATH=" + install_dir,
+        "-DCMAKE_SHARED_LINKER_FLAGS=" + ";".join(link_options),
         "-DPKG_CONFIG_USE_CMAKE_PREFIX_PATH=TRUE",
         "-DZLIB_USE_STATIC_LIBS=ON",
         *target.configure_options
