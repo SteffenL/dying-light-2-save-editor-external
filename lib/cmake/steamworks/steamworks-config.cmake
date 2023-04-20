@@ -10,12 +10,12 @@ target_include_directories(steamworks INTERFACE ${steamworks_ROOT}/include)
 if(WIN32)
     if(CMAKE_SIZEOF_VOID_P GREATER 4)
         set_target_properties(steamworks PROPERTIES
-            IMPORTED_LOCATION ${steamworks_ROOT}/lib/steam_api64.dll
+            IMPORTED_LOCATION ${steamworks_ROOT}/bin/steam_api64.dll
             IMPORTED_IMPLIB ${steamworks_ROOT}/lib/steam_api64.lib
         )
     else()
         set_target_properties(steamworks PROPERTIES
-            IMPORTED_LOCATION ${steamworks_ROOT}/lib/steam_api.dll
+            IMPORTED_LOCATION ${steamworks_ROOT}/bin/steam_api.dll
             IMPORTED_IMPLIB ${steamworks_ROOT}/lib/steam_api.lib
         )
     endif()
