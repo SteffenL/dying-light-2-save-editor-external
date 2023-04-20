@@ -98,28 +98,30 @@ def install_steamworks(target: Target):
                         os.path.join(install_include_dir, file_name))
     # Copy library files
     source_lib_dir = os.path.join(source_dir, "redistributable_bin")
-    install_lib_dir = os.path.join(
+    install_runtime_lib_dir = os.path.join(
         INSTALL_ROOT_DIR, "bin" if platform.system() == "Windows" else "lib")
-    os.makedirs(install_lib_dir, exist_ok=True)
+    install_link_lib_dir = os.path.join(INSTALL_ROOT_DIR, "lib")
+    os.makedirs(install_runtime_lib_dir, exist_ok=True)
+    os.makedirs(install_link_lib_dir, exist_ok=True)
     machine = platform.machine()
     if platform.system() == "Darwin":
         shutil.copyfile(os.path.join(source_lib_dir, "osx", "libsteam_api.dylib"),
-                        os.path.join(install_lib_dir, "libsteam_api.dylib"))
+                        os.path.join(install_runtime_lib_dir, "libsteam_api.dylib"))
     elif platform.system() == "Linux":
         bits = 64 if machine.lower() in ("amd64", "x86_64") else 32
         shutil.copyfile(os.path.join(source_lib_dir, "linux" + str(bits), "libsteam_api.so"),
-                        os.path.join(install_lib_dir, "libsteam_api.so"))
+                        os.path.join(install_runtime_lib_dir, "libsteam_api.so"))
     elif platform.system() == "Windows":
         if machine.lower() in ("amd64", "x86_64"):
             shutil.copyfile(os.path.join(source_lib_dir, "win64", "steam_api64.dll"),
-                            os.path.join(install_lib_dir, "steam_api64.dll"))
+                            os.path.join(install_runtime_lib_dir, "steam_api64.dll"))
             shutil.copyfile(os.path.join(source_lib_dir, "win64", "steam_api64.lib"),
-                            os.path.join(install_lib_dir, "steam_api64.lib"))
+                            os.path.join(install_link_lib_dir, "steam_api64.lib"))
         else:
             shutil.copyfile(os.path.join(source_lib_dir, "steam_api64.dll"),
-                            os.path.join(install_lib_dir, "steam_api64.dll"))
+                            os.path.join(install_runtime_lib_dir, "steam_api64.dll"))
             shutil.copyfile(os.path.join(source_lib_dir, "steam_api64.lib"),
-                            os.path.join(install_lib_dir, "steam_api64.lib"))
+                            os.path.join(install_link_lib_dir, "steam_api64.lib"))
     create_empty_file(build_dir + ".install.ok")
 
 
