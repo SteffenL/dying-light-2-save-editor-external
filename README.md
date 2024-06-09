@@ -2,18 +2,20 @@
 
 ## Building
 
-On Windows you should set the `VCVARS_ARCH` and `VCVARS_VERSION` environment variables:
+Environment variables should be set before running scripts:
 
-| Name             | Value  |
-| ---------------- | ------ |
-| `VCVARS_ARCH`    | `x64`  |
-| `VCVARS_VERSION` | `14.3` |
+| Name                       | Value    | OS      |
+| -------------------------- | -------- | ------- |
+| `GCLOUD_CREDENTIAL_BASE64` | (secret) | All     |
+| `VCVARS_ARCH`              | `x64`    | Windows |
+| `VCVARS_VERSION`           | `14.3`   | Windows |
 
 Crate A virtual environment for Python:
 
 ```
 python -m venv .venv
-".venv/Scripts/activate"
+# Linux: source .venv/bin/activate
+# Windows: ".venv/Scripts/activate"
 pip install -r scripts/requirements.txt
 ```
 
