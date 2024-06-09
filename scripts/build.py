@@ -146,13 +146,16 @@ def download(target: Target):
     file_path = get_download_file_path(target)
     if os.path.exists(file_path + ".ok"):
         return
-    print("Downloading {} {} from {}...".format(
-        target.name, target.version, url))
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    if url.startswith("gs://"):
-        gcloud_download(url, file_path)
-    else:
-        urlretrieve(url, file_path)
+    if not os.path.exists(file_path):
+        print("Downloading {} {} from {}...".format(
+            target.name, target.version, url))
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        if url.startswith("gs://"):
+            gcloud_download(url, file_path)
+        else:
+            urlretrieve(url, file_path)
+    print("Verifying {} {}...".format(
+        target.name, target.version))
     digest = sha256sum_file(file_path)
     if (digest != target.sha256):
         raise Exception("Verification failed: {}".format(file_path))
