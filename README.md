@@ -4,11 +4,13 @@
 
 Environment variables should be set before running scripts:
 
-| Name                       | Value    | OS      |
-| -------------------------- | -------- | ------- |
-| `GCLOUD_CREDENTIAL_BASE64` | (secret) | All     |
-| `VCVARS_ARCH`              | `x64`    | Windows |
-| `VCVARS_VERSION`           | `14.3`   | Windows |
+| Name                       | Value                | OS      |
+| -------------------------- | -------------------- | ------- |
+| `CMAKE_BUILD_TYPE`         | `Debug` or `Release` | Any     |
+| `GCLOUD_BUCKET`            | gcloud bucket URI    | Any     |
+| `GCLOUD_CREDENTIAL_BASE64` | (secret)             | Any     |
+| `VCVARS_ARCH`              | `x64`                | Windows |
+| `VCVARS_VERSION`           | `14.3`               | Windows |
 
 Crate A virtual environment for Python:
 
