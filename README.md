@@ -2,7 +2,7 @@
 
 ## Building
 
-Environment variables should be set before running scripts:
+Environment variables can be set before running scripts:
 
 | Name                       | Value                | OS      |
 | -------------------------- | -------------------- | ------- |

@@ -58,9 +58,6 @@ jobs:
     needs:
       - check-version
     runs-on: windows-2022
-    env:
-      VCVARS_ARCH: x64
-      VCVARS_VERSION: '14.3'
     strategy:
       matrix:
         build-type: [Debug, Release]
