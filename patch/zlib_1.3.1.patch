@@ -1,19 +1,21 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index b412dc7..a5e7a2f 100644
+index 15ceebe..d4ce8fb 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1,15 +1,14 @@
--cmake_minimum_required(VERSION 2.4.4)
-+cmake_minimum_required(VERSION 3.0)
+@@ -1,17 +1,16 @@
+-cmake_minimum_required(VERSION 2.4.4...3.15.0)
++cmake_minimum_required(VERSION 3.5...3.15.0)
  set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
  
 -project(zlib C)
+-
+-set(VERSION "1.3.1")
 +project(zlib
-+    VERSION "1.2.13"
++    VERSION "1.3.1"
 +    LANGUAGES C)
  
--set(VERSION "1.2.13")
--
+ option(ZLIB_BUILD_EXAMPLES "Enable Zlib Examples" ON)
+ 
 -set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "Installation directory for executables")
 -set(INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE PATH "Installation directory for libraries")
 -set(INSTALL_INC_DIR "${CMAKE_INSTALL_PREFIX}/include" CACHE PATH "Installation directory for headers")
@@ -26,7 +28,7 @@ index b412dc7..a5e7a2f 100644
  
  include(CheckTypeSize)
  include(CheckFunctionExists)
-@@ -60,7 +59,6 @@ if(MSVC)
+@@ -62,7 +61,6 @@ if(MSVC)
      set(CMAKE_DEBUG_POSTFIX "d")
      add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
      add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
@@ -34,7 +36,7 @@ index b412dc7..a5e7a2f 100644
  endif()
  
  if(NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
-@@ -75,13 +73,8 @@ if(NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
+@@ -77,12 +75,8 @@ if(NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
    endif()
  endif()
  
@@ -44,19 +46,20 @@ index b412dc7..a5e7a2f 100644
  configure_file(	${CMAKE_CURRENT_SOURCE_DIR}/zconf.h.cmakein
  		${CMAKE_CURRENT_BINARY_DIR}/zconf.h @ONLY)
 -include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR})
--
+ 
  
  #============================================================================
- # zlib
-@@ -149,6 +142,16 @@ endif(MINGW)
+@@ -150,9 +144,16 @@ if(MINGW)
+ endif(MINGW)
  
  add_library(zlib SHARED ${ZLIB_SRCS} ${ZLIB_DLL_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
- add_library(zlibstatic STATIC ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
-+
+-target_include_directories(zlib PUBLIC ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 +target_include_directories(zlib PUBLIC
 +    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 +    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 +    $<INSTALL_INTERFACE:${INSTALL_INC_DIR}>)
+ add_library(zlibstatic STATIC ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
+-target_include_directories(zlibstatic PUBLIC ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 +target_include_directories(zlibstatic PUBLIC
 +    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 +    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
@@ -65,7 +68,7 @@ index b412dc7..a5e7a2f 100644
  set_target_properties(zlib PROPERTIES DEFINE_SYMBOL ZLIB_DLL)
  set_target_properties(zlib PROPERTIES SOVERSION 1)
  
-@@ -176,6 +179,7 @@ endif()
+@@ -180,6 +181,7 @@ endif()
  
  if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
      install(TARGETS zlib zlibstatic
@@ -73,7 +76,7 @@ index b412dc7..a5e7a2f 100644
          RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
          ARCHIVE DESTINATION "${INSTALL_LIB_DIR}"
          LIBRARY DESTINATION "${INSTALL_LIB_DIR}" )
-@@ -183,31 +187,18 @@ endif()
+@@ -187,32 +189,17 @@ endif()
  if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL )
      install(FILES ${ZLIB_PUBLIC_HDRS} DESTINATION "${INSTALL_INC_DIR}")
  endif()
@@ -87,10 +90,25 @@ index b412dc7..a5e7a2f 100644
 -#============================================================================
 -# Example binaries
 -#============================================================================
- 
--add_executable(example test/example.c)
--target_link_libraries(example zlib)
--add_test(example example)
+-if(ZLIB_BUILD_EXAMPLES)
+-    add_executable(example test/example.c)
+-    target_link_libraries(example zlib)
+-    add_test(example example)
+-
+-    add_executable(minigzip test/minigzip.c)
+-    target_link_libraries(minigzip zlib)
+-
+-    if(HAVE_OFF64_T)
+-        add_executable(example64 test/example.c)
+-        target_link_libraries(example64 zlib)
+-        set_target_properties(example64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
+-        add_test(example64 example64)
+-
+-        add_executable(minigzip64 test/minigzip.c)
+-        target_link_libraries(minigzip64 zlib)
+-        set_target_properties(minigzip64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
+-    endif()
+-endif()
 +include(CMakePackageConfigHelpers)
 +configure_package_config_file(
 +    zlib-config.cmake.in zlib-config.cmake
@@ -98,23 +116,11 @@ index b412dc7..a5e7a2f 100644
 +    NO_SET_AND_CHECK_MACRO
 +    NO_CHECK_REQUIRED_COMPONENTS_MACRO
 +)
- 
--add_executable(minigzip test/minigzip.c)
--target_link_libraries(minigzip zlib)
++
 +install(FILES ${CMAKE_CURRENT_BINARY_DIR}/zlib-config.cmake
 +    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/zlib
 +)
- 
--if(HAVE_OFF64_T)
--    add_executable(example64 test/example.c)
--    target_link_libraries(example64 zlib)
--    set_target_properties(example64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
--    add_test(example64 example64)
--
--    add_executable(minigzip64 test/minigzip.c)
--    target_link_libraries(minigzip64 zlib)
--    set_target_properties(minigzip64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
--endif()
++
 +install(EXPORT zlib-targets DESTINATION ${INSTALL_LIB_DIR}/cmake/zlib)
 diff --git a/zlib-config.cmake.in b/zlib-config.cmake.in
 new file mode 100644

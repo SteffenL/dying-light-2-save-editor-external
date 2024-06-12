@@ -68,6 +68,7 @@ DOWNLOAD_ROOT_DIR = os.path.join(ROOT_DIR, "download")
 INSTALL_ROOT_DIR = os.path.join(ROOT_DIR, "install")
 PATCH_ROOT_DIR = os.path.join(ROOT_DIR, "patch")
 SOURCE_ROOT_DIR = os.path.join(ROOT_DIR, "source")
+BUILD_CONFIG = os.getenv("CMAKE_BUILD_TYPE", "Release")
 
 
 def get_download_file_path(target: Target):
@@ -82,7 +83,8 @@ def get_source_extract_dir(target: Target):
 
 def install_steamworks(target: Target):
     build_dir = os.path.join(BUILD_ROOT_DIR, target.name, target.version)
-    if os.path.exists(build_dir + ".install.ok"):
+    install_ok_file_path = build_dir + ".install.ok"
+    if os.path.exists(install_ok_file_path):
         return
     print("Installing {} {}...".format(target.name, target.version))
     source_dir = os.path.join(
@@ -122,7 +124,7 @@ def install_steamworks(target: Target):
                             os.path.join(install_runtime_lib_dir, "steam_api64.dll"))
             shutil.copyfile(os.path.join(source_lib_dir, "steam_api64.lib"),
                             os.path.join(install_link_lib_dir, "steam_api64.lib"))
-    create_empty_file(build_dir + ".install.ok")
+    create_empty_file(install_ok_file_path)
 
 
 def gcloud_download(url: str, file_path: str):
@@ -144,7 +146,8 @@ def download(target: Target):
         return target.download(target)
     url = expand_target_vars(target, target.url)
     file_path = get_download_file_path(target)
-    if os.path.exists(file_path + ".ok"):
+    download_ok_file_path = file_path + ".ok"
+    if os.path.exists(download_ok_file_path):
         return
     if not os.path.exists(file_path):
         print("Downloading {} {} from {}...".format(
@@ -159,7 +162,7 @@ def download(target: Target):
     digest = sha256sum_file(file_path)
     if (digest != target.sha256):
         raise Exception("Verification failed: {}".format(file_path))
-    create_empty_file(file_path + ".ok")
+    create_empty_file(download_ok_file_path)
 
 
 def source(target: Target):
@@ -168,12 +171,13 @@ def source(target: Target):
     if target.source:
         return target.source(target)
     extract_dir = get_source_extract_dir(target)
-    if os.path.exists(extract_dir + ".extract.ok"):
+    source_ok_file_path = extract_dir + ".extract.ok"
+    if os.path.exists(source_ok_file_path):
         return
     print("Extracting {} {} sources...".format(target.name, target.version))
     file_path = get_download_file_path(target)
     shutil.unpack_archive(file_path, extract_dir)
-    create_empty_file(extract_dir + ".extract.ok")
+    create_empty_file(source_ok_file_path)
 
 
 def patch(target: Target):
@@ -205,7 +209,8 @@ def configure(target: Target):
     source_dir = os.path.join(
         extract_dir, expand_target_vars(target, target.source_subdir))
     build_dir = os.path.join(BUILD_ROOT_DIR, target.name, target.version)
-    if os.path.exists(build_dir + ".configure.ok"):
+    configure_ok_file_path = build_dir + ".configure.ok"
+    if os.path.exists(configure_ok_file_path):
         return
     print("Configuring {} {}...".format(target.name, target.version))
     install_dir = INSTALL_ROOT_DIR
@@ -222,17 +227,16 @@ def configure(target: Target):
         source_dir,
         "-DBoost_USE_STATIC_LIBS=ON",
         "-DBUILD_SHARED_LIBS=OFF",
-        "-DCMAKE_BUILD_TYPE=" + os.getenv("CMAKE_BUILD_TYPE", "Release"),
+        "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG,
         "-DCMAKE_EXE_LINKER_FLAGS=" + ";".join(link_options),
         "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=TRUE",
-        "-DCMAKE_INSTALL_PREFIX=" + install_dir,
         "-DCMAKE_PREFIX_PATH=" + install_dir,
         "-DCMAKE_SHARED_LINKER_FLAGS=" + ";".join(link_options),
         "-DPKG_CONFIG_USE_CMAKE_PREFIX_PATH=TRUE",
         "-DZLIB_USE_STATIC_LIBS=ON",
         *target.configure_options
     ))
-    create_empty_file(build_dir + ".configure.ok")
+    create_empty_file(configure_ok_file_path)
 
 
 def build(target: Target):
@@ -241,7 +245,8 @@ def build(target: Target):
     if target.build:
         return target.build(target)
     build_dir = os.path.join(BUILD_ROOT_DIR, target.name, target.version)
-    if os.path.exists(build_dir + ".build.ok"):
+    build_ok_file_path = build_dir + ".build.ok"
+    if os.path.exists(build_ok_file_path):
         return
     print("Building {} {}...".format(target.name, target.version))
     subprocess.check_call((
@@ -249,7 +254,7 @@ def build(target: Target):
         "--build",
         build_dir
     ))
-    create_empty_file(build_dir + ".build.ok")
+    create_empty_file(build_ok_file_path)
 
 
 def install(target: Target):
@@ -258,22 +263,27 @@ def install(target: Target):
     if target.install:
         return target.install(target)
     build_dir = os.path.join(BUILD_ROOT_DIR, target.name, target.version)
-    if os.path.exists(build_dir + ".install.ok"):
+    install_dir = INSTALL_ROOT_DIR
+    install_ok_file_path = build_dir + ".install.ok"
+    if os.path.exists(install_ok_file_path):
         return
     print("Installing {} {}...".format(target.name, target.version))
     subprocess.check_call((
         "cmake",
         "--install",
-        build_dir
+        build_dir,
+        "--prefix",
+        install_dir
     ))
-    create_empty_file(build_dir + ".install.ok")
+    create_empty_file(install_ok_file_path)
 
 
 def copy_lib_to_install():
     print("Copying lib directory into install directory...")
-    os.makedirs(INSTALL_ROOT_DIR, exist_ok=True)
+    install_dir = INSTALL_ROOT_DIR
+    os.makedirs(install_dir, exist_ok=True)
     shutil.copytree(os.path.join(ROOT_DIR, "lib"),
-                    os.path.join(INSTALL_ROOT_DIR, "lib"), dirs_exist_ok=True)
+                    os.path.join(install_dir, "lib"), dirs_exist_ok=True)
 
 
 TARGETS = (
