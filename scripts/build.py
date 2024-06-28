@@ -343,6 +343,15 @@ TARGETS = (
            configure=False,
            build=False,
            install=install_steamworks),
+    Target(name="rapidcsv",
+           version="8.83",
+           sha256="9342eeb0ce37e30b778c4c030129d03e99f44a66d4710ac19627187bee774097",
+           filename="v{version}.tar.gz",
+           source_subdir="rapidcsv-{version}",
+           url="https://github.com/d99kris/rapidcsv/archive/refs/tags/{filename}",
+           configure_options=(
+               "-DRAPIDCSV_BUILD_TESTS=OFF",
+           )),
 )
 
 STAGES = (download, source, patch, configure, build, install)
