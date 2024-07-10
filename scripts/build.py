@@ -225,11 +225,13 @@ def configure(target: Target):
         build_dir,
         "-S",
         source_dir,
+        "-DBOOST_RUNTIME_LINK=static",
         "-DBoost_USE_STATIC_LIBS=ON",
         "-DBUILD_SHARED_LIBS=OFF",
         "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG,
         "-DCMAKE_EXE_LINKER_FLAGS=" + ";".join(link_options),
         "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=TRUE",
+        "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>",
         "-DCMAKE_PREFIX_PATH=" + install_dir,
         "-DCMAKE_SHARED_LINKER_FLAGS=" + ";".join(link_options),
         "-DPKG_CONFIG_USE_CMAKE_PREFIX_PATH=TRUE",
@@ -332,6 +334,8 @@ TARGETS = (
            url="https://github.com/wxWidgets/wxWidgets/releases/download/v{version}/{filename}",
            configure_options=(
                "-DwxBUILD_SHARED=OFF",
+               "-DwxBUILD_USE_STATIC_RUNTIME=ON",
+               "-DCMAKE_POLICY_DEFAULT_CMP0091=NEW"
            )),
     Target(name="steamworks-sdk",
            version="1.59",
