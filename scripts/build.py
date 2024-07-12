@@ -63,14 +63,17 @@ def create_empty_file(file_path: str):
     open(file_path, "w").close()
 
 
-ROOT_DIR = os.getcwd()
-BUILD_ROOT_DIR = os.path.join(ROOT_DIR, "build")
-DOWNLOAD_ROOT_DIR = os.path.join(ROOT_DIR, "download")
-INSTALL_ROOT_DIR = os.path.join(ROOT_DIR, "install")
-PATCH_ROOT_DIR = os.path.join(ROOT_DIR, "patch")
-SOURCE_ROOT_DIR = os.path.join(ROOT_DIR, "source")
+PROJECT_ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
+OUTPUT_ROOT_DIR = os.getenv("OUTPUT_DIR", PROJECT_ROOT_DIR)
+BUILD_ROOT_DIR = os.path.join(OUTPUT_ROOT_DIR, "build")
+DOWNLOAD_ROOT_DIR = os.path.join(OUTPUT_ROOT_DIR, "download")
+INSTALL_ROOT_DIR = os.path.join(OUTPUT_ROOT_DIR, "install")
+PATCH_ROOT_DIR = os.path.join(PROJECT_ROOT_DIR, "patch")
+SOURCE_ROOT_DIR = os.path.join(OUTPUT_ROOT_DIR, "source")
 BUILD_CONFIG = os.getenv("CMAKE_BUILD_TYPE", "Release")
 TOOLCHAIN_FILE = os.getenv("CMAKE_TOOLCHAIN_FILE")
+TARGET_SYSTEM = os.getenv("TARGET_SYSTEM", platform.system())
+TARGET_ARCH = os.getenv("TARGET_ARCH", platform.machine())
 
 
 def get_download_file_path(target: Target):
@@ -103,20 +106,19 @@ def install_steamworks(target: Target):
     # Copy library files
     source_lib_dir = os.path.join(source_dir, "redistributable_bin")
     install_runtime_lib_dir = os.path.join(
-        INSTALL_ROOT_DIR, "bin" if platform.system() == "Windows" else "lib")
+        INSTALL_ROOT_DIR, "bin" if TARGET_SYSTEM == "Windows" else "lib")
     install_link_lib_dir = os.path.join(INSTALL_ROOT_DIR, "lib")
     os.makedirs(install_runtime_lib_dir, exist_ok=True)
     os.makedirs(install_link_lib_dir, exist_ok=True)
-    machine = platform.machine()
-    if platform.system() == "Darwin":
+    if TARGET_SYSTEM == "Darwin":
         shutil.copyfile(os.path.join(source_lib_dir, "osx", "libsteam_api.dylib"),
                         os.path.join(install_runtime_lib_dir, "libsteam_api.dylib"))
-    elif platform.system() == "Linux":
-        bits = 64 if machine.lower() in ("amd64", "x86_64") else 32
+    elif TARGET_SYSTEM == "Linux":
+        bits = 64 if TARGET_ARCH.lower() in ("amd64", "x86_64") else 32
         shutil.copyfile(os.path.join(source_lib_dir, "linux" + str(bits), "libsteam_api.so"),
                         os.path.join(install_runtime_lib_dir, "libsteam_api.so"))
-    elif platform.system() == "Windows":
-        if machine.lower() in ("amd64", "x86_64"):
+    elif TARGET_SYSTEM == "Windows":
+        if TARGET_ARCH.lower() in ("amd64", "x86_64"):
             shutil.copyfile(os.path.join(source_lib_dir, "win64", "steam_api64.dll"),
                             os.path.join(install_runtime_lib_dir, "steam_api64.dll"))
             shutil.copyfile(os.path.join(source_lib_dir, "win64", "steam_api64.lib"),
@@ -176,6 +178,7 @@ def source(target: Target):
     source_ok_file_path = extract_dir + ".extract.ok"
     if os.path.exists(source_ok_file_path):
         return
+    os.makedirs(extract_dir, exist_ok=True)
     print("Extracting {} {} sources...".format(target.name, target.version))
     file_path = get_download_file_path(target)
     shutil.unpack_archive(file_path, extract_dir)
@@ -214,15 +217,16 @@ def configure(target: Target):
     configure_ok_file_path = build_dir + ".configure.ok"
     if os.path.exists(configure_ok_file_path):
         return
+    os.makedirs(build_dir, exist_ok=True)
     print("Configuring {} {}...".format(target.name, target.version))
     install_dir = INSTALL_ROOT_DIR
     link_options = []
-    if platform.system() == "Linux":
+    if TARGET_SYSTEM == "Linux":
         link_options.append("-static-libstdc++")
     toolchain_options = []
     if TOOLCHAIN_FILE is not None:
         toolchain_options.append("-DCMAKE_TOOLCHAIN_FILE=" + TOOLCHAIN_FILE)
-    cxx_flags = ["WINVER=0x601", "_WIN32_WINNT=0x601"] # Target Windows 7
+    cxx_flags = ["-DWINVER=0x601", "-D_WIN32_WINNT=0x601"] # Target Windows 7
     cxx_flags += target.cxx_flags
     subprocess.check_call((
         "cmake",
@@ -235,7 +239,7 @@ def configure(target: Target):
         "-DBoost_USE_STATIC_LIBS=ON",
         "-DBUILD_SHARED_LIBS=OFF",
         "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG,
-        "-DCMAKE_CXX_FLAGS=" + " ".join(map(lambda s: "\"-D" + s + "\"", cxx_flags)),
+        "-DCMAKE_CXX_FLAGS=" + " ".join(map(lambda s: '"{}"'.format(s.replace('"', '\\"')), cxx_flags)),
         "-DCMAKE_EXE_LINKER_FLAGS=" + ";".join(link_options),
         "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=TRUE",
         "-DCMAKE_PREFIX_PATH=" + install_dir,
@@ -257,6 +261,7 @@ def build(target: Target):
     build_ok_file_path = build_dir + ".build.ok"
     if os.path.exists(build_ok_file_path):
         return
+    os.makedirs(build_dir, exist_ok=True)
     print("Building {} {}...".format(target.name, target.version))
     subprocess.check_call((
         "cmake",
@@ -276,6 +281,7 @@ def install(target: Target):
     install_ok_file_path = build_dir + ".install.ok"
     if os.path.exists(install_ok_file_path):
         return
+    os.makedirs(install_dir, exist_ok=True)
     print("Installing {} {}...".format(target.name, target.version))
     subprocess.check_call((
         "cmake",
@@ -291,7 +297,7 @@ def copy_lib_to_install():
     print("Copying lib directory into install directory...")
     install_dir = INSTALL_ROOT_DIR
     os.makedirs(install_dir, exist_ok=True)
-    shutil.copytree(os.path.join(ROOT_DIR, "lib"),
+    shutil.copytree(os.path.join(PROJECT_ROOT_DIR, "lib"),
                     os.path.join(install_dir, "lib"), dirs_exist_ok=True)
 
 
@@ -310,7 +316,7 @@ TARGETS = (
            url="https://github.com/boostorg/boost/releases/download/boost-{version}/{filename}",
            cxx_flags=(
                # Boost 1.84 targets Windows 10 API by default
-               "BOOST_USE_WINAPI_VERSION=0x601",
+               "-DBOOST_USE_WINAPI_VERSION=0x601",
            )),
     Target(name="cereal",
            version="1.3.2",
