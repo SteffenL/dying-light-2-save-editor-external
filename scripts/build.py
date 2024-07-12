@@ -1,5 +1,5 @@
 import base64
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 import json
 import os
@@ -23,7 +23,8 @@ class Target:
     filename: str
     source_subdir:  str
     url: str
-    configure_options: List[str]
+    configure_options: List[str] = field(default_factory=lambda: [])
+    cxx_flags: List[str] = field(default_factory=lambda: [])
     download: Callable[["Target"], None] = None
     source: Callable[["Target"], None] = None
     patch: Callable[["Target"], None] = None
@@ -69,6 +70,7 @@ INSTALL_ROOT_DIR = os.path.join(ROOT_DIR, "install")
 PATCH_ROOT_DIR = os.path.join(ROOT_DIR, "patch")
 SOURCE_ROOT_DIR = os.path.join(ROOT_DIR, "source")
 BUILD_CONFIG = os.getenv("CMAKE_BUILD_TYPE", "Release")
+TOOLCHAIN_FILE = os.getenv("CMAKE_TOOLCHAIN_FILE")
 
 
 def get_download_file_path(target: Target):
@@ -217,6 +219,11 @@ def configure(target: Target):
     link_options = []
     if platform.system() == "Linux":
         link_options.append("-static-libstdc++")
+    toolchain_options = []
+    if TOOLCHAIN_FILE is not None:
+        toolchain_options.append("-DCMAKE_TOOLCHAIN_FILE=" + TOOLCHAIN_FILE)
+    cxx_flags = ["WINVER=0x601", "_WIN32_WINNT=0x601"] # Target Windows 7
+    cxx_flags += target.cxx_flags
     subprocess.check_call((
         "cmake",
         "-G",
@@ -228,12 +235,14 @@ def configure(target: Target):
         "-DBoost_USE_STATIC_LIBS=ON",
         "-DBUILD_SHARED_LIBS=OFF",
         "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG,
+        "-DCMAKE_CXX_FLAGS=" + " ".join(map(lambda s: "\"-D" + s + "\"", cxx_flags)),
         "-DCMAKE_EXE_LINKER_FLAGS=" + ";".join(link_options),
         "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=TRUE",
         "-DCMAKE_PREFIX_PATH=" + install_dir,
         "-DCMAKE_SHARED_LINKER_FLAGS=" + ";".join(link_options),
         "-DPKG_CONFIG_USE_CMAKE_PREFIX_PATH=TRUE",
         "-DZLIB_USE_STATIC_LIBS=ON",
+        *toolchain_options,
         *target.configure_options
     ))
     create_empty_file(configure_ok_file_path)
@@ -292,15 +301,17 @@ TARGETS = (
            sha256="38ef96b8dfe510d42707d9c781877914792541133e1870841463bfa73f883e32",
            filename="zlib-{version}.tar.xz",
            source_subdir="zlib-{version}",
-           url="https://www.zlib.net/{filename}",
-           configure_options=()),
+           url="https://www.zlib.net/{filename}"),
     Target(name="boost",
            version="1.85.0",
            sha256="0a9cc56ceae46986f5f4d43fe0311d90cf6d2fa9028258a95cab49ffdacf92ad",
            filename="boost-{version}-cmake.tar.xz",
            source_subdir="boost-{version}",
            url="https://github.com/boostorg/boost/releases/download/boost-{version}/{filename}",
-           configure_options=()),
+           cxx_flags=(
+               # Boost 1.84 targets Windows 10 API by default
+               "BOOST_USE_WINAPI_VERSION=0x601",
+           )),
     Target(name="cereal",
            version="1.3.2",
            sha256="16a7ad9b31ba5880dac55d62b5d6f243c3ebc8d46a3514149e56b5e7ea81f85f",
