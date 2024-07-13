@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.24)
+project(dl2se_external)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(BUILD_SHARED_LIBS OFF)
+set(DCMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
+set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH TRUE)
+
+add_subdirectory(cmake/libs)
