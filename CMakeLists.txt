@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.24)
 project(dl2se_external)
 
+include(${CMAKE_SOURCE_DIR}/cmake/include/subprojects.cmake)
+subprojects_init()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(BUILD_SHARED_LIBS OFF)
@@ -11,4 +14,4 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_compile_options(-static-libstdc++)
 endif()
 
-add_subdirectory(cmake/libs)
+add_subdirectory(subprojects)

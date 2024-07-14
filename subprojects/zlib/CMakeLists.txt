@@ -1,0 +1,8 @@
+subprojects_add(
+    NAME zlib
+    URL https://www.zlib.net/zlib-1.3.1.tar.xz
+    HASH SHA256=38ef96b8dfe510d42707d9c781877914792541133e1870841463bfa73f883e32
+    PATCH_FILE ${CMAKE_CURRENT_SOURCE_DIR}/zlib.patch
+    CMAKE_CACHE_ARGS
+        -DZLIB_BUILD_EXAMPLES:BOOL=OFF
+)
