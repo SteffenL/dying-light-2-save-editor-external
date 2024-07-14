@@ -1,0 +1,11 @@
+execute_process(
+    COMMAND gsutil cp ${URL} ${LOCAL_FILE}
+    COMMAND_ERROR_IS_FATAL ANY
+)
+
+file(SHA256 ${LOCAL_FILE} CALC_HASH)
+if(NOT CALC_HASH STREQUAL HASH)
+    message(FATAL_ERROR "Verification of file failed: ${LOCAL_FILE}")
+endif()
+
+file(ARCHIVE_EXTRACT INPUT ${LOCAL_FILE} DESTINATION ${EXTRACT_DIR})

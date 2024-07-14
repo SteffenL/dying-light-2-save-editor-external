@@ -16,6 +16,14 @@ Environment variables can be set before running scripts:
 | `VCVARS_ARCH`              | `x64`                | Windows |
 | `VCVARS_VERSION`           | `14.3`               | Windows |
 
+Authentication for private libraries:
+
+```
+gcloud auth login --cred-file=<credentials.json> --no-launch-browser
+```
+
+set(PRIVATE_LIBS_URL gs://langnes-build-resources/libraries)
+
 Build on Linux:
 
 ```
@@ -35,4 +43,9 @@ call .venv\Scripts\activate.bat
 pip install -r scripts/requirements.txt
 
 python scripts/devenv.py python scripts/build.py
+```
+
+```
+cmake -G Ninja -B build -S .
+cmake --install build --prefix install
 ```

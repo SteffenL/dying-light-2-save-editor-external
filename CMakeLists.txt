@@ -7,4 +7,8 @@ set(BUILD_SHARED_LIBS OFF)
 set(DCMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
 set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH TRUE)
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_compile_options(-static-libstdc++)
+endif()
+
 add_subdirectory(cmake/libs)
