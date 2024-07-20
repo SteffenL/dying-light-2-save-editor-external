@@ -1,8 +1,3 @@
-set(BUILD_TESTS OFF)
-set(BUILD_DOC OFF)
-set(BUILD_SANDBOX OFF)
-set(SKIP_PERFORMANCE_COMPARISON ON)
-
 set(URL gs://langnes-build-resources/libraries/steamworks-sdk/steamworks_sdk_159.zip)
 #set(URL gs://${GCLOUD_BUCKET}/libraries/steamworks-sdk/steamworks_sdk_159.zip)
 
@@ -11,19 +6,18 @@ set(LOCAL_FILE ${CMAKE_CURRENT_BINARY_DIR}/steamworks_sdk_159.zip)
 set(EXTRACT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(SDK_DIR ${EXTRACT_DIR}/sdk)
 
-FetchContent_Declare(
-    steamworks_sdk
+subprojects_add(
+    NAME steamworks_sdk
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -DURL=${URL} -DHASH=${HASH} -DLOCAL_FILE=${LOCAL_FILE} -DEXTRACT_DIR=${EXTRACT_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/download.cmake
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    LOG_OUTPUT_ON_FAILURE TRUE
-    ALWAYS TRUE
+    NO_BUILD
+    CMAKE_CACHE_ARGS
+        -DBUILD_TESTS:BOOL=OFF
+        -DBUILD_DOC:BOOL=OFF
+        -DBUILD_SANDBOX:BOOL=OFF
+        -DSKIP_PERFORMANCE_COMPARISON:BOOL=ON
 )
-FetchContent_GetProperties(steamworks_sdk)
-if(NOT depname_POPULATED)
-    FetchContent_Populate(steamworks_sdk)
-endif()
 
+#file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/install.cmake CONTENT [[
 install(FILES steamworks-config.cmake DESTINATION lib/cmake/steamworks)
 install(DIRECTORY ${SDK_DIR}/public/steam DESTINATION include)
 
@@ -46,3 +40,4 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
         install(FILES ${SDK_DIR}/redistributable_bin/steam_api.lib DESTINATION lib)
     endif()
 endif()
+#]])

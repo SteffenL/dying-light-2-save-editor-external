@@ -11,23 +11,26 @@ macro(subprojects_add_shared_cache_args)
 endmacro()
 
 function(subprojects_add)
+    set(OPTIONS NO_CONFIGURE NO_BUILD)
     set(SINGLE_ARGS NAME URL HASH PATCH_FILE)
-    set(MULTI_ARGS DEPENDS CMAKE_CACHE_ARGS)
-    cmake_parse_arguments(SP "" "${SINGLE_ARGS}" "${MULTI_ARGS}" ${ARGN})
+    set(MULTI_ARGS DEPENDS DOWNLOAD_COMMAND CMAKE_CACHE_ARGS)
+    cmake_parse_arguments(SP "${OPTIONS}" "${SINGLE_ARGS}" "${MULTI_ARGS}" ${ARGN})
 
-    list(APPEND EP_ARGS
-        ${SP_NAME}
-    )
+    list(APPEND EP_ARGS ${SP_NAME})
 
     if(SP_DEPENDS)
         list(APPEND EP_ARGS DEPENDS ${SP_DEPENDS})
     endif()
 
-    list(APPEND EP_ARGS
-        URL ${SP_URL}
-        URL_HASH ${SP_HASH}
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    )
+    if(SP_URL)
+        list(APPEND EP_ARGS URL ${SP_URL})
+    endif()
+
+    if(SP_URL)
+        list(APPEND EP_ARGS URL_HASH ${SP_HASH})
+    endif()
+
+    list(APPEND EP_ARGS DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
 
     if(SP_PATCH_FILE)
         cmake_path(RELATIVE_PATH SP_ROOT_DIR BASE_DIRECTORY ${CMAKE_SOURCE_DIR} OUTPUT_VARIABLE SP_RELATIVE_ROOT_DIR)
@@ -40,23 +43,38 @@ function(subprojects_add)
         )
     endif()
 
-    list(APPEND EP_ARGS CMAKE_CACHE_ARGS ${SP_SHARED_CMAKE_CACHE_ARGS})
-    list(APPEND EP_ARGS CMAKE_CACHE_ARGS ${SP_CMAKE_CACHE_ARGS})
+    if(SP_DOWNLOAD_COMMAND)
+        list(APPEND EP_ARGS DOWNLOAD_COMMAND ${SP_DOWNLOAD_COMMAND})
+    endif()
+
+    if(SP_NO_CONFIGURE)
+        list(APPEND EP_ARGS CONFIGURE_COMMAND "")
+    endif()
+
+    if(SP_NO_BUILD)
+        list(APPEND EP_ARGS BUILD_COMMAND "")
+    endif()
+
+    if(SP_NO_INSTALL)
+        list(APPEND EP_ARGS INSTALL_COMMAND "")
+    endif()
+
+    list(APPEND EP_ARGS CMAKE_CACHE_ARGS
+        ${SP_SHARED_CMAKE_CACHE_ARGS}
+        ${SP_CMAKE_CACHE_ARGS}
+    )
 
     get_directory_property(SP_COMPILE_DEFINITIONS_LIST COMPILE_DEFINITIONS)
-    foreach(ITEM IN LISTS SP_COMPILE_DEFINITIONS_LIST)
-        set(ITEM "-D${ITEM}")
-        string(REPLACE "\\" "\\\\" ITEM "${ITEM}")
-        string(REPLACE "\"" "\\\"" ITEM "${ITEM}")
-        if(ITEM MATCHES " ")
-            set(ITEM "\"${ITEM}\"")
-        endif()
-        set(SP_CXX_FLAGS "${SP_CXX_FLAGS} ${ITEM}")
+    foreach(FLAG IN LISTS SP_COMPILE_DEFINITIONS_LIST)
+        string(APPEND SP_CXX_FLAGS " [===[-D${FLAG}]===]")
     endforeach()
     if(SP_CXX_FLAGS)
         list(APPEND EP_ARGS "-DCMAKE_CXX_FLAGS:STRING=${SP_CXX_FLAGS}")
     endif()
 
-    message("EP_ARGS = ${EP_ARGS}")
-    ExternalProject_Add(${EP_ARGS})
+    foreach(ARG IN LISTS EP_ARGS)
+        string(APPEND EP_ARGS_ESCAPED " [====[${ARG}]====]")
+    endforeach()
+
+    cmake_language(EVAL CODE "ExternalProject_Add(${EP_ARGS_ESCAPED})")
 endfunction()
