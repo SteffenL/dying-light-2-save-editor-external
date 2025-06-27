@@ -13,7 +13,7 @@ from urllib.parse import urlsplit
 
 from google.cloud import storage
 import patch_ng
-
+from py7zr import unpack_7zarchive
 
 @dataclass
 class Target:
@@ -217,6 +217,7 @@ def configure(target: Target):
     link_options = []
     if platform.system() == "Linux":
         link_options.append("-static-libstdc++")
+    cmake_policy_version = "3.24"
     subprocess.check_call((
         "cmake",
         "-G",
@@ -230,6 +231,7 @@ def configure(target: Target):
         "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG,
         "-DCMAKE_EXE_LINKER_FLAGS=" + ";".join(link_options),
         "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=TRUE",
+        "-DCMAKE_POLICY_VERSION_MINIMUM=" + cmake_policy_version,
         "-DCMAKE_PREFIX_PATH=" + install_dir,
         "-DCMAKE_SHARED_LINKER_FLAGS=" + ";".join(link_options),
         "-DPKG_CONFIG_USE_CMAKE_PREFIX_PATH=TRUE",
@@ -295,9 +297,9 @@ TARGETS = (
            url="https://www.zlib.net/{filename}",
            configure_options=()),
     Target(name="boost",
-           version="1.85.0",
-           sha256="0a9cc56ceae46986f5f4d43fe0311d90cf6d2fa9028258a95cab49ffdacf92ad",
-           filename="boost-{version}-cmake.tar.xz",
+           version="1.88.0",
+           sha256="feba537f6d32c062ed0f26b4d6e5b8e8450d51ef81492369a101ab99fcead278",
+           filename="boost-{version}-cmake.7z",
            source_subdir="boost-{version}",
            url="https://github.com/boostorg/boost/releases/download/boost-{version}/{filename}",
            configure_options=()),
@@ -314,8 +316,8 @@ TARGETS = (
                "-DSKIP_PERFORMANCE_COMPARISON=ON",
            )),
     Target(name="msgpack",
-           version="6.1.1",
-           sha256="5fd555742e37bbd58d166199e669f01f743c7b3c6177191dd7b31fb0c37fa191",
+           version="7.0.0",
+           sha256="7504b7af7e7b9002ce529d4f941e1b7fb1fb435768780ce7da4abaac79bb156f",
            filename="msgpack-cxx-{version}.tar.gz",
            source_subdir="msgpack-cxx-{version}",
            url="https://github.com/msgpack/msgpack-c/releases/download/cpp-{version}/{filename}",
@@ -325,8 +327,8 @@ TARGETS = (
                 "-DMSGPACK_USE_BOOST=OFF",
            )),
     Target(name="wxwidgets",
-           version="3.2.5",
-           sha256="0ad86a3ad3e2e519b6a705248fc9226e3a09bbf069c6c692a02acf7c2d1c6b51",
+           version="3.3.0",
+           sha256="492f5eb8a58715f2602f31025c3eaa20d71a3ec8e052c7a9d33153966b4badca",
            filename="wxWidgets-{version}.tar.bz2",
            source_subdir="wxWidgets-{version}",
            url="https://github.com/wxWidgets/wxWidgets/releases/download/v{version}/{filename}",
@@ -344,8 +346,8 @@ TARGETS = (
            build=False,
            install=install_steamworks),
     Target(name="rapidcsv",
-           version="8.83",
-           sha256="9342eeb0ce37e30b778c4c030129d03e99f44a66d4710ac19627187bee774097",
+           version="8.87",
+           sha256="f642ec5948bb6fe42c4802ab35323c445850ead30d0d03d737312b4b3b7d2bc5",
            filename="v{version}.tar.gz",
            source_subdir="rapidcsv-{version}",
            url="https://github.com/d99kris/rapidcsv/archive/refs/tags/{filename}",
@@ -358,6 +360,9 @@ STAGES = (download, source, patch, configure, build, install)
 
 
 def main(args: List[str]):
+    # 7-Zip archive support
+    shutil.register_unpack_format("7zip", [".7z"], unpack_7zarchive)
+
     known_target_names = set([target.name for target in TARGETS])
     for target_name in args:
         if not target_name in known_target_names:

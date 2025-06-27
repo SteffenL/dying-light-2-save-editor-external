@@ -124,16 +124,18 @@ index 15ceebe..d4ce8fb 100644
 +install(EXPORT zlib-targets DESTINATION ${INSTALL_LIB_DIR}/cmake/zlib)
 diff --git a/zlib-config.cmake.in b/zlib-config.cmake.in
 new file mode 100644
-index 0000000..a7f7f00
+index 0000000..8ba6108
 --- /dev/null
 +++ b/zlib-config.cmake.in
-@@ -0,0 +1,9 @@
+@@ -0,0 +1,11 @@
 +@PACKAGE_INIT@
 +
 +include(${CMAKE_CURRENT_LIST_DIR}/zlib-targets.cmake)
 +
-+if(ZLIB_USE_STATIC_LIBS)
-+    add_library(ZLIB::ZLIB ALIAS zlibstatic)
-+else()
-+    add_library(ZLIB::ZLIB ALIAS zlib)
++if(NOT TARGET ZLIB::ZLIB)
++    if(ZLIB_USE_STATIC_LIBS)
++        add_library(ZLIB::ZLIB ALIAS zlibstatic)
++    else()
++        add_library(ZLIB::ZLIB ALIAS zlib)
++    endif()
 +endif()
