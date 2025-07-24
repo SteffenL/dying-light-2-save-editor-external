@@ -69,7 +69,7 @@ jobs:
   build-windows:
     needs:
       - check-version
-    runs-on: windows-2022
+    runs-on: windows-2025
     strategy:
       matrix:
         build-type: [Debug, Release]
