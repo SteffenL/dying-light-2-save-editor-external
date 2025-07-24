@@ -49,17 +49,17 @@ jobs:
           GCLOUD_BUCKET: ${{ vars.GCLOUD_BUCKET }}
           CMAKE_BUILD_TYPE: ${{ matrix.build-type }}
         run: |
-          python3 -m venv .venv || exit 1
-          source .venv/bin/activate || exit 1
-          pip install -r scripts/requirements.txt || exit 1
-          python3 scripts/build.py || exit 1
+          python3 -m venv .venv
+          source .venv/bin/activate
+          pip install -r scripts/requirements.txt
+          python3 scripts/build.py
         shell: bash
       - name: Create package
         run: |
-          mkdir dist || exit 1
-          echo "${{ github.sha }}" > install/version.txt || exit 1
-          build_type=$(echo "${{ matrix.build-type }}" | tr '[:upper:]' '[:lower:]') || exit 1
-          (cd install && tar --create --xz "--file=../dist/${ASSET_NAME_PREFIX}${RELEASE_VERSION}-linux.x86_64.${build_type}.tar.xz" *) || exit 1
+          mkdir dist
+          echo "${{ github.sha }}" > install/version.txt
+          build_type=$(echo "${{ matrix.build-type }}" | tr '[:upper:]' '[:lower:]')
+          (cd install && tar --create --xz "--file=../dist/${ASSET_NAME_PREFIX}${RELEASE_VERSION}-linux.x86_64.${build_type}.tar.xz" *)
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'push'
         with:
@@ -80,17 +80,17 @@ jobs:
           GCLOUD_BUCKET: ${{ vars.GCLOUD_BUCKET }}
           CMAKE_BUILD_TYPE: ${{ matrix.build-type }}
         run: |
-          python3 -m venv .venv || exit 1
-          source .venv/Scripts/activate || exit 1
-          pip install -r scripts/requirements.txt || exit 1
-          python3 scripts/devenv.py python3 scripts/build.py || exit 1
+          python3 -m venv .venv
+          source .venv/Scripts/activate
+          pip install -r scripts/requirements.txt
+          python3 scripts/devenv.py python3 scripts/build.py
         shell: bash
       - name: Create package
         run: |
-          mkdir dist || exit 1
-          echo "${{ github.sha }}" > install/version.txt || exit 1
-          build_type=$(echo "${{ matrix.build-type }}" | tr '[:upper:]' '[:lower:]') || exit 1
-          (cd install && tar -cJf "../dist/${ASSET_NAME_PREFIX}${RELEASE_VERSION}-windows.amd64.${build_type}.tar.xz" *) || exit 1
+          mkdir dist
+          echo "${{ github.sha }}" > install/version.txt
+          build_type=$(echo "${{ matrix.build-type }}" | tr '[:upper:]' '[:lower:]')
+          (cd install && tar -cJf "../dist/${ASSET_NAME_PREFIX}${RELEASE_VERSION}-windows.amd64.${build_type}.tar.xz" *)
         shell: bash
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'push'
@@ -115,9 +115,9 @@ jobs:
           path: dist
           merge-multiple: true
       - name: List artifacts
-        run: find dist/ || exit 1
+        run: find dist/
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create --verify-tag --draft --target "${{ github.sha }}" "v${RELEASE_VERSION}" dist/* || exit 1
+        run: gh release create --verify-tag --draft --target "${{ github.sha }}" "v${RELEASE_VERSION}" dist/*
         shell: bash
