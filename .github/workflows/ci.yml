@@ -63,7 +63,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'push'
         with:
-          name: dist
+          name: dist-${{ runner.os }}-${{ matrix.build-type }}
           path: dist/*
           retention-days: 1
   build-windows:
@@ -95,7 +95,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'push'
         with:
-          name: dist
+          name: dist-${{ runner.os }}-${{ matrix.build-type }}
           path: dist/*
           retention-days: 1
   publish:
@@ -111,8 +111,9 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: dist
+          pattern: dist*
           path: dist
+          merge-multiple: true
       - name: List artifacts
         run: find dist/ || exit 1
       - name: Create GitHub Release
