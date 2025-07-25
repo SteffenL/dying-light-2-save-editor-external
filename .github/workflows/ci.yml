@@ -1,5 +1,8 @@
 name: CI
-on: [push, pull_request]
+on:
+  push:
+    branches:
+  pull_request:
 env:
   GCLOUD_CREDENTIAL_BASE64: ${{ secrets.GCLOUD_CREDENTIAL_BASE64 }}
   # Remove "-dev" only in a release branch.
