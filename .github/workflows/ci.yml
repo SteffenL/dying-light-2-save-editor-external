@@ -26,7 +26,7 @@ jobs:
       - check-version
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/steffenl/cxx-builder:1.1
+      image: ghcr.io/steffenl/cxx-builder:1.2
       volumes:
         - /node20_glibc2.17:/node20_glibc2.17:rw,rshared
         - /node20_glibc2.17:/__e/node20:ro,rshared
