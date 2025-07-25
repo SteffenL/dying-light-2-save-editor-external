@@ -119,5 +119,5 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create --verify-tag --draft --target "${{ github.sha }}" "v${RELEASE_VERSION}" dist/*
+        run: gh release create --draft --target "${{ github.sha }}" "v${RELEASE_VERSION}" dist/*
         shell: bash
