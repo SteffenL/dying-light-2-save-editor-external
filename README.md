@@ -1,5 +1,9 @@
 # DL2SE External
 
+External dependencies/libraries used in the [Dying Light 2 Save Editor](https://steffenl.com/projects/dying-light-2-save-editor) by [Steffen André Langnes](https://steffenl.com).
+
+If you're looking for the save editor, downloads or contact information then please visit the [website for DL2SE](https://steffenl.com/projects/dying-light-2-save-editor).
+
 ## Building
 
 Environment variables can be set before running scripts:
