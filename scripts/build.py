@@ -344,6 +344,7 @@ TARGETS = (
            url="https://github.com/wxWidgets/wxWidgets/releases/download/v{version}/{filename}",
            configure_options=(
                "-DwxBUILD_SHARED=" + to_cmake_option_value(should_build_shared_libs()),
+               "-DwxUSE_ZLIB=builtin", # Use built-in to work around undefined references to zlib functions when attempting to use it as a shared library
            )),
     Target(name="steamworks-sdk",
            version="1.59",
