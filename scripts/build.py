@@ -62,6 +62,18 @@ def create_empty_file(file_path: str):
     open(file_path, "w").close()
 
 
+def parse_cmake_bool(s: str):
+    return s.upper() in ("1", "TRUE", "ON")
+
+
+def should_build_shared_libs():
+    return parse_cmake_bool(os.getenv("BUILD_SHARED_LIBS", "OFF"))
+
+
+def to_cmake_option_value(b: bool):
+    return "ON" if b else "OFF"
+
+
 ROOT_DIR = os.getcwd()
 BUILD_ROOT_DIR = os.path.join(ROOT_DIR, "build")
 DOWNLOAD_ROOT_DIR = os.path.join(ROOT_DIR, "download")
@@ -224,8 +236,8 @@ def configure(target: Target):
         build_dir,
         "-S",
         source_dir,
-        "-DBoost_USE_STATIC_LIBS=ON",
-        "-DBUILD_SHARED_LIBS=OFF",
+        "-DBoost_USE_STATIC_LIBS=" + to_cmake_option_value(not should_build_shared_libs()),
+        "-DBUILD_SHARED_LIBS=" + to_cmake_option_value(should_build_shared_libs()),
         "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG,
         "-DCMAKE_EXE_LINKER_FLAGS=" + ";".join(link_options),
         "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=TRUE",
@@ -233,7 +245,7 @@ def configure(target: Target):
         "-DCMAKE_PREFIX_PATH=" + install_dir,
         "-DCMAKE_SHARED_LINKER_FLAGS=" + ";".join(link_options),
         "-DPKG_CONFIG_USE_CMAKE_PREFIX_PATH=TRUE",
-        "-DZLIB_USE_STATIC_LIBS=ON",
+        "-DZLIB_USE_STATIC_LIBS=" + to_cmake_option_value(not should_build_shared_libs()),
         *target.configure_options
     ))
     create_empty_file(configure_ok_file_path)
@@ -331,7 +343,7 @@ TARGETS = (
            source_subdir="wxWidgets-{version}",
            url="https://github.com/wxWidgets/wxWidgets/releases/download/v{version}/{filename}",
            configure_options=(
-               "-DwxBUILD_SHARED=OFF",
+               "-DwxBUILD_SHARED=" + to_cmake_option_value(should_build_shared_libs()),
            )),
     Target(name="steamworks-sdk",
            version="1.59",
