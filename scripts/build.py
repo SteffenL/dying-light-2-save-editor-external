@@ -75,12 +75,12 @@ def to_cmake_option_value(b: bool):
 
 
 ROOT_DIR = os.getcwd()
-BUILD_ROOT_DIR = os.path.join(ROOT_DIR, "build")
+BUILD_CONFIG = os.getenv("CMAKE_BUILD_TYPE", "Release")
+BUILD_ROOT_DIR = os.path.join(ROOT_DIR, "build", "shared" if should_build_shared_libs() else "static", BUILD_CONFIG)
 DOWNLOAD_ROOT_DIR = os.path.join(ROOT_DIR, "download")
-INSTALL_ROOT_DIR = os.path.join(ROOT_DIR, "install")
+INSTALL_ROOT_DIR = os.path.join(ROOT_DIR, "install", "shared" if should_build_shared_libs() else "static", BUILD_CONFIG)
 PATCH_ROOT_DIR = os.path.join(ROOT_DIR, "patch")
 SOURCE_ROOT_DIR = os.path.join(ROOT_DIR, "source")
-BUILD_CONFIG = os.getenv("CMAKE_BUILD_TYPE", "Release")
 
 
 def get_download_file_path(target: Target):
